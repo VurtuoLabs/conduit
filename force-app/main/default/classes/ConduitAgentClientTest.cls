@@ -4,39 +4,12 @@
  */
 @IsTest
 private class ConduitAgentClientTest {
-  /** Records what it was handed, so tests can assert on the call rather than the answer. */
-  public class RecordingClient implements ConduitAgentClient.Client {
-    public String agentApiName;
-    public String message;
-    public String sessionId;
-    public Integer calls = 0;
-
-    public ConduitAgentClient.Reply send(
-      String agentApiName,
-      String message,
-      String sessionId
-    ) {
-      this.agentApiName = agentApiName;
-      this.message = message;
-      this.sessionId = sessionId;
-      this.calls++;
-      return new ConduitAgentClient.Reply('a reply', 'session-1');
-    }
-  }
-
-  public class ThrowingClient implements ConduitAgentClient.Client {
-    public ConduitAgentClient.Reply send(
-      String agentApiName,
-      String message,
-      String sessionId
-    ) {
-      throw new ConduitAgentClient.ConduitException('agent is inactive');
-    }
-  }
+  // The doubles live in ConduitTestDoubles so ConduitCaseBriefControllerTest can use them
+  // too. Inner classes of a private test class are not visible outside it.
 
   @IsTest
   static void passesArgumentsStraightThrough() {
-    RecordingClient stub = new RecordingClient();
+    ConduitTestDoubles.RecordingClient stub = new ConduitTestDoubles.RecordingClient();
     ConduitAgentClient.setClient(stub);
 
     ConduitAgentClient.Reply reply = ConduitAgentClient.send(
@@ -54,7 +27,7 @@ private class ConduitAgentClientTest {
 
   @IsTest
   static void allowsNullSessionForFirstTurn() {
-    RecordingClient stub = new RecordingClient();
+    ConduitTestDoubles.RecordingClient stub = new ConduitTestDoubles.RecordingClient();
     ConduitAgentClient.setClient(stub);
 
     ConduitAgentClient.send('My_Agent', 'hello', null);
@@ -64,7 +37,7 @@ private class ConduitAgentClientTest {
 
   @IsTest
   static void rejectsBlankAgentName() {
-    RecordingClient stub = new RecordingClient();
+    ConduitTestDoubles.RecordingClient stub = new ConduitTestDoubles.RecordingClient();
     ConduitAgentClient.setClient(stub);
 
     try {
@@ -85,7 +58,7 @@ private class ConduitAgentClientTest {
 
   @IsTest
   static void rejectsBlankMessage() {
-    RecordingClient stub = new RecordingClient();
+    ConduitTestDoubles.RecordingClient stub = new ConduitTestDoubles.RecordingClient();
     ConduitAgentClient.setClient(stub);
 
     try {
@@ -103,7 +76,7 @@ private class ConduitAgentClientTest {
 
   @IsTest
   static void surfacesClientFailures() {
-    ConduitAgentClient.setClient(new ThrowingClient());
+    ConduitAgentClient.setClient(new ConduitTestDoubles.ThrowingClient());
 
     try {
       ConduitAgentClient.send('My_Agent', 'hello', null);

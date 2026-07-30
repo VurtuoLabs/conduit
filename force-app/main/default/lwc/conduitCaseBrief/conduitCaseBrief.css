@@ -1,3 +1,8 @@
+/* Styling deliberately avoids the --lwc-* custom properties. Those are internal tokens and
+   the platform rejects them from the 'c' namespace at deploy time, with an error that names
+   only the first one it hits. SLDS utility classes carry the layout; this file carries the
+   few things they do not. */
+
 /* The agent replies in plain text with meaningful line breaks. pre-wrap keeps them while
    still wrapping long lines. A rich-text renderer would collapse them into one block. */
 .conduit-prose {
@@ -5,27 +10,27 @@
   word-break: break-word;
   margin: 0;
   font-family: inherit;
-  font-size: var(--lwc-fontSize3, 0.8125rem);
+  font-size: 0.8125rem;
   line-height: 1.55;
-  color: var(--lwc-colorTextDefault, #181818);
+  color: #181818;
   /* Bounded so a long answer cannot push the rest of the record page out of reach. */
   max-height: 30rem;
   overflow-y: auto;
 }
 
 .conduit-exchange {
-  border-top: 1px solid var(--lwc-colorBorderSeparatorAlt, #e5e5e5);
+  border-top: 1px solid #e5e5e5;
 }
 
 .conduit-question {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--lwc-colorTextWeak, #444444);
+  color: #444444;
 }
 
 .conduit-error {
-  border-left: 3px solid var(--lwc-colorBorderError, #ea001e);
-  background: var(--lwc-colorBackgroundRowSelected, #f3f3f3);
+  border-left: 3px solid #ea001e;
+  background: #fef1ee;
   border-radius: 0.125rem;
 }
 

@@ -195,7 +195,7 @@ assert on generated text, which is nondeterministic and would flake.
 ```
 conduit/
 ├── force-app/main/default/
-│   ├── classes/            6 classes, 5 test classes, all at API 64.0
+│   ├── classes/            6 production classes, 6 test classes, all at API 64.0
 │   ├── lwc/conduitCaseBrief/
 │   ├── objects/Conduit_Agent__mdt/
 │   ├── customMetadata/     the Case_Brief record, unset by default

@@ -109,25 +109,44 @@ private class ConduitCaseContextTest {
   }
 
   /**
-   * The check that matters most in this class. A user without read access to
-   * Case.Description must not get it back through the context, because the agent would
-   * otherwise summarize a field the platform hides from them.
+   * The check that matters most in this class. Data the running user is not allowed to see
+   * must never reach the agent, because the agent reads it straight back to them.
+   *
+   * USER_MODE enforces at two levels and the failure shapes differ, so both are asserted.
+   * On a stock org the minimum-access profile has no Case read at all, which takes the
+   * first branch: the query is refused outright rather than quietly returning rows.
    */
   @IsTest
-  static void respectsFieldLevelSecurity() {
+  static void enforcesObjectAndFieldSecurityForTheRunningUser() {
     User restricted = minimumAccessUser();
     Id caseId = theCase().Id;
 
     System.runAs(restricted) {
-      Boolean canSeeDescription = Schema.SObjectType.Case.fields.Description.isAccessible();
-      if (canSeeDescription) {
-        // Nothing to prove in this org's configuration.
+      if (!Schema.SObjectType.Case.isAccessible()) {
+        try {
+          ConduitCaseContext.build(caseId);
+          Assert.fail(
+            'A user with no Case access must not receive case context'
+          );
+        } catch (Exception refused) {
+          Assert.isTrue(
+            refused instanceof QueryException ||
+            refused instanceof ConduitAgentClient.ConduitException,
+            'Expected the query to be refused, got ' + refused.getTypeName()
+          );
+        }
         return;
       }
+
+      if (Schema.SObjectType.Case.fields.Description.isAccessible()) {
+        // This user can read the field, so there is nothing for USER_MODE to strip.
+        return;
+      }
+
       Map<String, Object> context = ConduitCaseContext.build(caseId).toMap();
       Assert.isFalse(
         context.containsKey('description'),
-        'WITH USER_MODE must strip a field this user cannot read'
+        'USER_MODE must strip a field this user cannot read'
       );
     }
   }

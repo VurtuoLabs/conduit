@@ -17,8 +17,8 @@ private class ConduitCaseBriefControllerTest {
     return [SELECT Id FROM Case LIMIT 1].Id;
   }
 
-  private static ConduitAgentClientTest.RecordingClient useRecordingClient() {
-    ConduitAgentClientTest.RecordingClient stub = new ConduitAgentClientTest.RecordingClient();
+  private static ConduitTestDoubles.RecordingClient useRecordingClient() {
+    ConduitTestDoubles.RecordingClient stub = new ConduitTestDoubles.RecordingClient();
     ConduitAgentClient.setClient(stub);
     ConduitAgentSettings.agentApiNameOverride = 'Test_Agent';
     return stub;
@@ -26,7 +26,7 @@ private class ConduitCaseBriefControllerTest {
 
   @IsTest
   static void generateBriefSendsCaseContextToTheConfiguredAgent() {
-    ConduitAgentClientTest.RecordingClient stub = useRecordingClient();
+    ConduitTestDoubles.RecordingClient stub = useRecordingClient();
 
     Test.startTest();
     ConduitAgentClient.Reply reply = ConduitCaseBriefController.generateBrief(
@@ -53,7 +53,7 @@ private class ConduitCaseBriefControllerTest {
 
   @IsTest
   static void generateBriefAlwaysStartsAFreshSession() {
-    ConduitAgentClientTest.RecordingClient stub = useRecordingClient();
+    ConduitTestDoubles.RecordingClient stub = useRecordingClient();
 
     Test.startTest();
     ConduitCaseBriefController.generateBrief(caseId());
@@ -67,7 +67,7 @@ private class ConduitCaseBriefControllerTest {
 
   @IsTest
   static void followUpReusesTheSession() {
-    ConduitAgentClientTest.RecordingClient stub = useRecordingClient();
+    ConduitTestDoubles.RecordingClient stub = useRecordingClient();
 
     Test.startTest();
     ConduitCaseBriefController.askFollowUp(
@@ -86,7 +86,7 @@ private class ConduitCaseBriefControllerTest {
 
   @IsTest
   static void followUpWithoutSessionIsRejected() {
-    ConduitAgentClientTest.RecordingClient stub = useRecordingClient();
+    ConduitTestDoubles.RecordingClient stub = useRecordingClient();
 
     Test.startTest();
     try {
@@ -107,7 +107,7 @@ private class ConduitCaseBriefControllerTest {
 
   @IsTest
   static void agentFailureReachesTheComponentAsAuraHandled() {
-    ConduitAgentClient.setClient(new ConduitAgentClientTest.ThrowingClient());
+    ConduitAgentClient.setClient(new ConduitTestDoubles.ThrowingClient());
     ConduitAgentSettings.agentApiNameOverride = 'Test_Agent';
 
     Test.startTest();

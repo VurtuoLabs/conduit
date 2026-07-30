@@ -1,0 +1,25 @@
+{
+  "name": "conduit",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Invoke Agentforce agents from Apex and Lightning Web Components.",
+  "scripts": {
+    "lint": "eslint **/lwc/**/*.js",
+    "test": "npm run test:unit",
+    "test:unit": "sfdx-lwc-jest",
+    "test:unit:watch": "sfdx-lwc-jest --watch",
+    "test:unit:coverage": "sfdx-lwc-jest --coverage",
+    "prettier": "prettier --write \"**/*.{cls,cls-meta.xml,css,html,js,json,md,trigger,xml,yaml,yml}\"",
+    "prettier:verify": "prettier --check \"**/*.{cls,cls-meta.xml,css,html,js,json,md,trigger,xml,yaml,yml}\""
+  },
+  "devDependencies": {
+    "@lwc/eslint-plugin-lwc": "^3.1.0",
+    "@prettier/plugin-xml": "^3.4.1",
+    "@salesforce/eslint-config-lwc": "^4.0.0",
+    "@salesforce/sfdx-lwc-jest": "^7.0.2",
+    "eslint": "^9.29.0",
+    "eslint-plugin-jest": "^28.14.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-apex": "^2.2.6"
+  }
+}

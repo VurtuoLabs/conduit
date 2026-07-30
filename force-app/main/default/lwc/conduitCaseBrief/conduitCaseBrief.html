@@ -1,0 +1,91 @@
+<template>
+  <lightning-card title="Case Brief" icon-name="utility:summarydetail">
+    <lightning-button
+      slot="actions"
+      label={primaryLabel}
+      variant="brand"
+      disabled={isBusy}
+      onclick={handleGenerate}
+    ></lightning-button>
+
+    <div class="slds-var-p-horizontal_medium slds-var-p-bottom_medium">
+      <template lwc:if={showIntro}>
+        <p class="slds-text-color_weak slds-var-p-vertical_medium">
+          Pull this case, its account and contact, recent comments, email and
+          open tasks into a short brief for whoever picks it up next.
+        </p>
+      </template>
+
+      <template lwc:if={errorMessage}>
+        <div
+          class="conduit-error slds-var-p-around_small slds-var-m-vertical_small"
+          role="alert"
+        >
+          <lightning-icon
+            icon-name="utility:error"
+            variant="error"
+            size="x-small"
+            alternative-text="Error"
+          ></lightning-icon>
+          <span class="slds-var-m-left_x-small">{errorMessage}</span>
+        </div>
+      </template>
+
+      <template lwc:if={hasBrief}>
+        <pre class="conduit-prose">{brief}</pre>
+
+        <template lwc:if={hasExchanges}>
+          <div class="slds-var-m-top_medium">
+            <template for:each={exchanges} for:item="exchange">
+              <div
+                key={exchange.id}
+                class="conduit-exchange slds-var-m-top_small slds-var-p-top_small"
+              >
+                <p class="conduit-question">{exchange.question}</p>
+                <pre class="conduit-prose">{exchange.answer}</pre>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <div class="slds-var-m-top_medium">
+          <lightning-textarea
+            label="Ask a follow-up"
+            placeholder="What is the SLA exposure here?"
+            value={question}
+            disabled={isBusy}
+            onchange={handleQuestionChange}
+          ></lightning-textarea>
+          <div class="slds-var-m-top_x-small">
+            <lightning-button
+              label="Ask"
+              disabled={isAskDisabled}
+              onclick={handleAsk}
+            ></lightning-button>
+            <lightning-button
+              label="Copy"
+              class="slds-var-m-left_x-small"
+              disabled={isBusy}
+              onclick={handleCopy}
+            ></lightning-button>
+          </div>
+        </div>
+      </template>
+
+      <template lwc:if={isBusy}>
+        <div
+          class="slds-align_absolute-center slds-var-p-vertical_large conduit-waiting"
+        >
+          <lightning-spinner
+            alternative-text="Working"
+            size="small"
+            variant="brand"
+          ></lightning-spinner>
+          <p class="slds-text-color_weak slds-var-m-left_large">
+            Reading the case. This takes a few seconds.
+          </p>
+        </div>
+      </template>
+    </div>
+  </lightning-card>
+</template>

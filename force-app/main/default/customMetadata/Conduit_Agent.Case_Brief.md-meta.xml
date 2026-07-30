@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Case Brief</label>
+    <protected>false</protected>
+    <values>
+        <field>Agent_API_Name__c</field>
+        <value
+      xsi:type="xsd:string"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    >REPLACE_WITH_YOUR_AGENT_API_NAME</value>
+    </values>
+    <values>
+        <field>Active__c</field>
+        <value
+      xsi:type="xsd:boolean"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    >true</value>
+    </values>
+    <values>
+        <field>Description__c</field>
+        <value
+      xsi:type="xsd:string"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    >Agent used by the Case Brief component on the Case record page.</value>
+    </values>
+</CustomMetadata>

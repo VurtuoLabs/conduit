@@ -33,6 +33,46 @@ public with sharing class ConduitAgentClient {
     }
   }
 
+  /**
+   * `agentResponse` does not come back as plain text. The platform wraps it in a typed
+   * envelope, `{"type":"Text","value":"..."}`, and handing that straight to a component
+   * renders the JSON on screen instead of the answer.
+   *
+   * Unwrapping is defensive rather than shape-assuming: not every agent or API version
+   * returns the envelope, and a response that is genuinely plain text, or that merely
+   * happens to start with a brace, has to survive untouched.
+   */
+  @TestVisible
+  private static String unwrap(String raw) {
+    if (String.isBlank(raw)) {
+      return raw;
+    }
+    String trimmed = raw.trim();
+    if (!trimmed.startsWith('{')) {
+      return raw;
+    }
+    try {
+      Object parsed = JSON.deserializeUntyped(trimmed);
+      if (!(parsed instanceof Map<String, Object>)) {
+        return raw;
+      }
+      Map<String, Object> envelope = (Map<String, Object>) parsed;
+      Object value = envelope.get('value');
+      if (value instanceof String && String.isNotBlank((String) value)) {
+        return (String) value;
+      }
+      // Some shapes nest the text under `message` instead.
+      Object message = envelope.get('message');
+      if (message instanceof String && String.isNotBlank((String) message)) {
+        return (String) message;
+      }
+      return raw;
+    } catch (Exception notJson) {
+      // It only looked like JSON. Return it as the agent sent it.
+      return raw;
+    }
+  }
+
   /** Seam that lets tests replace the live call. */
   public interface Client {
     Reply send(String agentApiName, String message, String sessionId);
@@ -97,7 +137,7 @@ public with sharing class ConduitAgentClient {
       }
 
       Map<String, Object> output = result.getOutputParameters();
-      String reply = (String) output.get('agentResponse');
+      String reply = unwrap((String) output.get('agentResponse'));
       String returnedSession = (String) output.get('sessionId');
 
       // A successful call with no text is the normal symptom of an agent whose topics

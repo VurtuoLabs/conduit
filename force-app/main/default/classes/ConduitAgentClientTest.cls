@@ -74,6 +74,59 @@ private class ConduitAgentClientTest {
     );
   }
 
+  // The platform returns agentResponse wrapped as {"type":"Text","value":"..."}. Handing
+  // that to a component renders JSON on screen instead of the answer, so these lock the
+  // unwrapping down in both directions: envelopes come apart, everything else is untouched.
+
+  @IsTest
+  static void unwrapsTheTypedTextEnvelope() {
+    String raw = '{"type":"Text","value":"Situation\\nSign-in is failing."}';
+    Assert.areEqual(
+      'Situation\nSign-in is failing.',
+      ConduitAgentClient.unwrap(raw),
+      'The envelope must be removed and newlines preserved'
+    );
+  }
+
+  @IsTest
+  static void unwrapsAMessageShapedEnvelope() {
+    Assert.areEqual(
+      'the answer',
+      ConduitAgentClient.unwrap('{"type":"Text","message":"the answer"}')
+    );
+  }
+
+  @IsTest
+  static void leavesPlainTextAlone() {
+    Assert.areEqual(
+      'Situation\nIt broke.',
+      ConduitAgentClient.unwrap('Situation\nIt broke.')
+    );
+  }
+
+  @IsTest
+  static void leavesTextThatMerelyStartsWithABraceAlone() {
+    // A brief could legitimately open with a brace. It must not be eaten.
+    String raw = '{not json at all';
+    Assert.areEqual(raw, ConduitAgentClient.unwrap(raw));
+  }
+
+  @IsTest
+  static void leavesJsonWithoutAKnownTextKeyAlone() {
+    String raw = '{"type":"Text","somethingElse":"x"}';
+    Assert.areEqual(
+      raw,
+      ConduitAgentClient.unwrap(raw),
+      'Unknown shapes pass through intact'
+    );
+  }
+
+  @IsTest
+  static void toleratesBlankResponses() {
+    Assert.areEqual(null, ConduitAgentClient.unwrap(null));
+    Assert.areEqual('', ConduitAgentClient.unwrap(''));
+  }
+
   @IsTest
   static void surfacesClientFailures() {
     ConduitAgentClient.setClient(new ConduitTestDoubles.ThrowingClient());

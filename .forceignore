@@ -15,3 +15,8 @@ package.xml
 # fails on properties that do not exist in the project's API version.
 bots
 genAiPlannerBundles
+
+# Record pages belong to the org, not to this package. conduitCaseBrief is added to a Case
+# page in the App Builder; shipping someone's whole FlexiPage would overwrite the layout of
+# every org this is deployed into.
+flexipages

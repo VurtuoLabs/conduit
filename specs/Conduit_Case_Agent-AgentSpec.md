@@ -466,3 +466,31 @@ employee agents rather than a property of this agent. Behavior was verified thro
 `--use-live-actions` on the authoring bundle, which exercises the same Agent Script and the
 same Apex against the same records. End-user verification in the Agentforce panel in
 Lightning is the remaining gap and needs a human in the UI.
+
+## Record context: why the agent asks, and what it does instead
+
+Opened from the Agentforce panel on a case record, the agent still does not know which case
+that is. This is a platform gap, not an oversight.
+
+Agent Script linked variables accept exactly three sources: `@MessagingSession`,
+`@MessagingEndUser` and `@VoiceCall`. All three are service-agent constructs that an employee
+agent does not have. There is no `@context.recordId`, no `@Record`, and no documented way to
+bind the current Lightning record into an employee agent's variables. Scribe has the same
+gap, which is why it opens by asking which Opportunity the call is about.
+
+`ConduitCurrentCase` closes it with `Case.LastViewedDate`, which the platform maintains per
+user. The most recently viewed case for the running user is, in practice, the record whose
+page they are sitting on while they type. The router calls it whenever the engineer says
+"this case" or asks about a case without naming one.
+
+This is a heuristic and is treated as one:
+
+- It can be wrong if the engineer opened a different case moments earlier.
+- The router is instructed to state which case it resolved, by number and subject, and to
+  say a different one can be named. A wrong guess is only correctable if it is announced.
+- Nothing it enables writes anything until the engineer confirms, and every write names the
+  case number first.
+
+The LWC path does not use this at all. `conduitCaseBrief` passes `recordId` from the record
+page straight to Apex, which is exact. The heuristic exists only for the conversational
+surface, where no exact answer is available.

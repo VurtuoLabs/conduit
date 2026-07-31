@@ -47,10 +47,18 @@ start_agent case_router:
                   Do not load this case again unless the engineer names a different one.
 
             if @variables.case_loaded == False:
-                | No case is loaded yet. If the engineer named a case number or pasted a case
-                  record id, call the load case tool with it. If they have not named one, ask
-                  which case they are working. Do NOT try to route anywhere else until a case is
-                  loaded, because nothing else can run without one.
+                | No case is loaded yet, and nothing else can run until one is. Load it now
+                  rather than asking, unless you genuinely have nothing to go on:
+                  - If the engineer named a case number or pasted a case record id, call the
+                    load case tool with it.
+                  - If they said "this case", "the case I'm on", "this one", or asked about a
+                    case without naming one, call the current case tool. It resolves the case
+                    they most recently opened, which is the record they are looking at.
+                  After the current case tool runs, ALWAYS tell them which case you picked, by
+                  number and subject, and say they can name a different one if that is wrong.
+                  It resolves the most recently viewed case, so it can be wrong, and they can
+                  only correct it if you say what you chose.
+                  Only ask which case they mean if the current case tool finds nothing.
 
             if @variables.draft_recipient != "" and @variables.draft_result == "":
                 | IMPORTANT: a customer reply for this case has already been composed and is
@@ -82,6 +90,16 @@ start_agent case_router:
                 set @variables.case_priority = @outputs.priority
                 set @variables.case_loaded = @outputs.found
 
+            load_current_case: @actions.load_current_case
+                description: "Resolve the case the engineer is currently looking at. Use when they say 'this case' or ask about a case without naming one."
+                with ignored = "n/a"
+                set @variables.case_id = @outputs.caseId
+                set @variables.case_number = @outputs.caseNumber
+                set @variables.case_subject = @outputs.subject
+                set @variables.case_status = @outputs.status
+                set @variables.case_priority = @outputs.priority
+                set @variables.case_loaded = @outputs.found
+
             go_summary: @utils.transition to @subagent.case_summary
                 description: "The engineer wants a brief, summary, or handover of the loaded case."
                 available when @variables.case_loaded == True
@@ -105,6 +123,41 @@ start_agent case_router:
                 description: "A case-related request too vague to act on."
 
     actions:
+        load_current_case:
+            description: "Resolves the case the running user most recently opened, for when they refer to it without naming it."
+            label: "Get Current Case"
+            target: "apex://ConduitCurrentCase"
+            include_in_progress_indicator: True
+            progress_indicator_message: "Finding the case you are on..."
+            inputs:
+                ignored: string
+                    label: "Unused"
+                    description: "Not used. Send any value."
+                    is_required: False
+            outputs:
+                found: boolean
+                    label: "Found"
+                    filter_from_agent: True
+                caseId: string
+                    label: "Case Id"
+                    filter_from_agent: True
+                caseNumber: string
+                    label: "Case Number"
+                    filter_from_agent: False
+                subject: string
+                    label: "Subject"
+                    filter_from_agent: False
+                status: string
+                    label: "Status"
+                    filter_from_agent: False
+                priority: string
+                    label: "Priority"
+                    filter_from_agent: False
+                summary: string
+                    label: "Summary"
+                    description: "Which case was resolved, or why none could be."
+                    filter_from_agent: False
+
         load_case:
             description: "Resolves a case number or record id into the working case and returns its headline fields."
             label: "Load Case"

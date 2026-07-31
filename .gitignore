@@ -39,3 +39,7 @@ $RECYCLE.BIN/
 .env
 .env.local
 .env.*.local
+
+# Agent publish artifacts, compiled from aiAuthoringBundles on `sf agent publish`
+force-app/main/default/bots/
+force-app/main/default/genAiPlannerBundles/

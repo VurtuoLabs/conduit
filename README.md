@@ -5,7 +5,11 @@ Call an Agentforce agent from Apex, and put the answer somewhere a user can act 
 Agentforce ships an excellent conversational surface. What it does not give you is a clean
 way to say "take this record, assemble the context that matters, ask the agent, and render
 the result on the page." Conduit is that layer: a small, tested set of Apex classes for
-invoking an agent, plus one reference Lightning Web Component built on top of them.
+invoking an agent, a reference Lightning Web Component built on top of them, and the
+Agentforce agent they call.
+
+Most examples of this stop at the invocation and leave you to supply the agent. Conduit
+ships both halves, so `sf project deploy start` gives you something that actually runs.
 
 The package is deliberately thin. It is roughly 600 lines of Apex, and most of that is the
 parts people get wrong the first time, field-level security on the context queries, session
@@ -60,6 +64,41 @@ unless you hand it back the id from the previous one. It travels agent to client
 controller to component and back again, which is why the component holds it in state rather
 than the Apex holding it in a static.
 
+## The agent
+
+**`Conduit_Case_Agent`** is an Agentforce **employee agent** for support engineers working a
+case. It is a hub-and-spoke machine: `case_router` loads a case, and nothing else runs until
+it has. Four spokes:
+
+| Subagent        | Writes? | What it does                                                                          |
+| --------------- | ------- | ------------------------------------------------------------------------------------- |
+| `case_summary`  | no      | Handover brief built from the case and a merged feed of its comments, email and tasks |
+| `similar_cases` | no      | Previously closed cases with similar subjects, and how each was resolved              |
+| `case_updates`  | **yes** | Status and priority changes, and internal notes                                       |
+| `reply_draft`   | **yes** | Drafts a customer reply onto the case. It cannot send one                             |
+
+Plus the standard `off_topic` and `ambiguous_question` guardrails.
+
+Three design rules are worth knowing before you extend it:
+
+**Writes propose before they apply.** `ConduitCaseStatusUpdate` and `ConduitEmailDraft` take
+an `apply` flag: false computes and returns what would happen, true commits. The agent shows
+the engineer the preview, and the platform's own `require_user_confirmation` gate stops the
+write until they agree.
+
+**Claims are bound to action output.** The agent cannot say a note or draft was saved unless
+the tool returned. `note_result` and `draft_result` are set from action outputs and checked
+at the top of each subagent's instructions. This is not a stylistic choice: without it the
+agent will state that a draft was saved when no record exists. See the Deltas section of
+[the agent spec](specs/Conduit_Case_Agent-AgentSpec.md).
+
+**Drafts are never sent.** `ConduitEmailDraft` writes `EmailMessage` with `Status = '5'` and
+resolves the recipient in Apex from the case contact. The agent supplies subject and body
+only, and never chooses who receives mail.
+
+The full design, including the subagent map and every action contract, is in
+[`specs/Conduit_Case_Agent-AgentSpec.md`](specs/Conduit_Case_Agent-AgentSpec.md).
+
 ## Requirements
 
 - An org with Agentforce enabled and at least one **active** agent
@@ -77,13 +116,22 @@ cd conduit
 sf project deploy start --source-dir force-app --target-org <your-org-alias>
 ```
 
-Then point it at your agent. In Setup, open **Custom Metadata Types**, then **Conduit
-Agent**, then **Manage Records**, and edit the **Case Brief** record. Set **Agent API Name**
-to the API name from Agent Builder.
+This deploys both halves: the invocation layer, and **Conduit Case Agent**, the Agentforce
+employee agent it calls. Publish and activate the agent:
 
-Copy that value from Agent Builder rather than typing it. It is usually not the display
-label and often carries a numeric suffix, and a mismatch here is the most common reason an
-agent is reported as not found.
+```bash
+sf agent publish authoring-bundle --api-name Conduit_Case_Agent --target-org <your-org-alias>
+sf agent activate --api-name Conduit_Case_Agent --target-org <your-org-alias>
+```
+
+`Conduit_Agent__mdt.Case_Brief` already points at `Conduit_Case_Agent`, so there is nothing
+to configure unless you want to point it at a different agent. To do that, open **Custom
+Metadata Types**, then **Conduit Agent**, then **Manage Records**, and edit the **Case
+Brief** record.
+
+If you do point it elsewhere, copy the value from Agent Builder rather than typing it. It is
+usually not the display label and often carries a numeric suffix, and a mismatch here is the
+most common reason an agent is reported as not found.
 
 Assign the **Conduit User** permission set to anyone who needs the component. It grants the
 Apex entry points only. Agentforce access, record visibility and field visibility all
@@ -195,11 +243,13 @@ assert on generated text, which is nondeterministic and would flake.
 ```
 conduit/
 ├── force-app/main/default/
-│   ├── classes/            6 production classes, 6 test classes, all at API 64.0
+│   ├── aiAuthoringBundles/Conduit_Case_Agent/   the agent, in Agent Script
+│   ├── classes/            12 invocation + 6 agent action classes, all at API 64.0
 │   ├── lwc/conduitCaseBrief/
 │   ├── objects/Conduit_Agent__mdt/
-│   ├── customMetadata/     the Case_Brief record, unset by default
-│   └── permissionsets/     Conduit User
+│   ├── customMetadata/     Case_Brief, pointed at Conduit_Case_Agent
+│   └── permissionsets/     Conduit User, including agentAccesses
+├── specs/                  the agent spec, with build deltas and verification
 ├── scripts/apex/           ping-agent.apex
 ├── docs/TROUBLESHOOTING.md
 ├── config/                 scratch org definition
